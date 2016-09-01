@@ -17,7 +17,7 @@ static char ErrCode[100][10] = {0};
 
 // 数据提取后输出目录
 string dir_output;
-string dir_output2;
+
 
 // log文件
 ofstream filelog; 
