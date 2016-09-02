@@ -1,0 +1,15 @@
+114.80.154.34
+6271
+TD60442001
+30976596
+30
+30
+10
+
+%% line1: IP
+%% line2: PORT
+%% line3: userID
+%% line4: password
+%% line5: nTimeOutVal //获取数据时，指定网络超时（秒数，为0则设为2分钟），若超过nTimeOutVal秒后未收到回应数据包，则内部会关闭连接
+%% line6: nRetryCount //获取数据时，若掉线，指定重连次数（为0则不重连），若重连nRetryCount次之后仍掉线，则返回网络错误
+%% line7: nRetryGap   //掉线之后重连的时间间隔（秒数，为0则设为1秒）

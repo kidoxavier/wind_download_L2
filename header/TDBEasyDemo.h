@@ -17,6 +17,6 @@ int LoadUserConfig(OPEN_SETTINGS& settings);
 int LogInWithUserConfig(THANDLE& hTdb, OPEN_SETTINGS& settings);
 int MakeLocalLogFile(ofstream& filelog);
 int ResponseToTDBReturn(int& nRet, THANDLE& hTdb, OPEN_SETTINGS& settings);
-
+int ProcessTodayDir(string today_str);
 
 #endif //_TDBEASYDEMO_H_

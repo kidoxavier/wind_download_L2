@@ -1,0 +1,15 @@
+E:\DrawDataFromWindL2Server\stkList.txt
+0
+2949
+E:\DrawDataFromWindL2Server\dateList.txt
+20160513
+20160513
+D:\WindL2TestDownloadTwice\
+
+%% 1st line: path\file
+%% 2nd line: start stock No.
+%% 3rd line: end stock No.
+%% 4th line: path\file
+%% 5th line: start day
+%% 6th line: end day
+%% 7th line: output dir

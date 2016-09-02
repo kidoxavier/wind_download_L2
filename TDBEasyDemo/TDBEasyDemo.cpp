@@ -93,26 +93,10 @@ int main()
 			continue;
 		}
 	
+		
 		// 创建当天日期的文件夹，检查文件夹是否存在
-		string dir_today = dir_output;
-		dir_today += dateList[dayi];
-		dir_today += "\\";		
-		if(access(dir_today.c_str(),0)==0){
-			//Exists, do nothing
-		}
-		else{
-			//Create the folder
-			if(mkdir(dir_today.c_str())==0){
-				cerr<< "Info\t" << OutputLocalTime() << "Date folder created." << dir_today <<endl;
-				filelog<< "Info\t" << OutputLocalTime() << "Date folder created." << dir_today <<endl;
-			}
-			else{
-				cerr<< "Error\t" << OutputLocalTime() << "Error when creating date folder."<< dir_today <<endl; 
-				filelog<< "Error\t" << OutputLocalTime() << "Error when creating date folder."<< dir_today <<endl;	
-				getchar();
-				exit(0);
-			}
-		}
+		ProcessTodayDir(dateList[dayi]);
+
 	
 		// 开始遍历所有股票
 		for(vector<string>::size_type stocki = stkStart; stocki < stkEnd; ++stocki)
@@ -162,7 +146,7 @@ int main()
 				// shanghai没有order
 				if ("SZ-2-0" == thisStkMarket){		
 					nRetOrder = GetOrder(hTdb, thisStk.c_str(), thisStkMarket.c_str(), todayDate);
-					flagRetry = ResponseToTDBReturn(nRetOrderQueue, hTdb, settings);
+					flagRetry = ResponseToTDBReturn(nRetOrder, hTdb, settings);
 					if (flagRetry)		// 如果flagRetry非0，返回while重新下载
 						{flagSuccess = false;continue;}
 				}
@@ -415,9 +399,9 @@ int ResponseToTDBReturn(int& nRet, THANDLE& hTdb, OPEN_SETTINGS& settings)
 			break;
 			
 		case TDB_OUT_OF_MEMORY:
-			cerr << "Warning\t" << OutputLocalTime() << "Warning: Out of memory! Waiting 60s... " << endl; 
-			filelog << "Warning\t" << OutputLocalTime() << "Warning: Out of memory! Waiting 60s... " << endl; 
-			Sleep(1000*60);
+			cerr << "Warning\t" << OutputLocalTime() << "Warning: Out of memory! Waiting 30s... " << endl; 
+			filelog << "Warning\t" << OutputLocalTime() << "Warning: Out of memory! Waiting 30s... " << endl; 
+			Sleep(1000*30);
 			return -2;
 			break;
 
@@ -434,4 +418,47 @@ int ResponseToTDBReturn(int& nRet, THANDLE& hTdb, OPEN_SETTINGS& settings)
 }
 
 
+int ProcessTodayDir(string today_str)
+{
+	// 确认主输出目录是否存在
+	if(access(dir_output.c_str(),0)==0){
+		//Exists, do nothing
+	}
+	else{
+		//Create the folder
+		if(mkdir(dir_output.c_str())==0){
+			cerr<< "Info\t" << OutputLocalTime() << "Date folder created." << dir_output <<endl;
+			filelog<< "Info\t" << OutputLocalTime() << "Date folder created." << dir_output <<endl;
+		}
+		else{
+			cerr<< "Error\t" << OutputLocalTime() << "Error when creating date folder."<< dir_output <<endl; 
+			filelog<< "Error\t" << OutputLocalTime() << "Error when creating date folder."<< dir_output <<endl;	
+			getchar();
+			exit(0);
+		}
+	}
+
+	// 确认当天子目录是否存在
+	string dir_today = dir_output;
+	dir_today += today_str;
+	dir_today += "\\";		
+	if(access(dir_today.c_str(),0)==0){
+		//Exists, do nothing
+	}
+	else{
+		//Create the folder
+		if(mkdir(dir_today.c_str())==0){
+			cerr<< "Info\t" << OutputLocalTime() << "Date folder created." << dir_today <<endl;
+			filelog<< "Info\t" << OutputLocalTime() << "Date folder created." << dir_today <<endl;
+		}
+		else{
+			cerr<< "Error\t" << OutputLocalTime() << "Error when creating date folder."<< dir_today <<endl; 
+			filelog<< "Error\t" << OutputLocalTime() << "Error when creating date folder."<< dir_today <<endl;	
+			getchar();
+			exit(0);
+		}
+	}
+
+	return 1;
+}
 
