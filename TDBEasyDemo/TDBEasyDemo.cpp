@@ -1,6 +1,21 @@
 // TDBEasyDemo.cpp : 定义控制台应用程序的入口点。
 //
 # include "TDBEasyDemo.h"
+
+#include <stdio.h>
+#include <string.h> 
+#include <algorithm>
+#include <assert.h>
+#include <time.h>
+#include <iostream>  
+#include <fstream>  
+#include <stdlib.h>  
+#include <io.h>
+#include <direct.h>
+#include "Windows.h"
+#include <string>  
+#include <vector>
+
 using namespace std;
 
 
@@ -35,7 +50,7 @@ int main()
     THANDLE hTdb;
 	LogInWithUserConfig(hTdb, settings);
 
-	//int nRet = TDB_SUCCESS;
+	int nRet = TDB_SUCCESS;
 
 	//获取两个市场的股票代码，从API上实时返回
 	//GetCodeTable(hTdb, "SZ-2-0");
@@ -373,7 +388,6 @@ int MakeLocalLogFile(ofstream& filelog)
 }
 
 
-
 int ResponseToTDBReturn(int& nRet, THANDLE& hTdb, OPEN_SETTINGS& settings)
 {
 	switch(nRet)
@@ -405,3 +419,6 @@ int ResponseToTDBReturn(int& nRet, THANDLE& hTdb, OPEN_SETTINGS& settings)
 	}
 
 }
+
+
+

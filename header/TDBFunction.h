@@ -2,13 +2,8 @@
 #ifndef _TDBFUNCTION_H_
 #define _TDBFUNCTION_H_
 
-#include <conio.h>
-#include <string>
-#include <algorithm>
-#include <assert.h>
-#include "Windows.h"
-#include "iostream"
 #include "TDBAPI.h"
+#include <string>  
 
 //定义证券种类
 #define ID_BASECLASS_INDEX 	0x00
@@ -37,12 +32,19 @@
 
 void InitSetting(OPEN_SETTINGS* settings,  TDB_PROXY_SETTING* proxy_settings);
 int GetKData(THANDLE hTdb, char* szCode, char* szMarket, int nBeginDate, int nEndDate, int nCycle, int nUserDef, int nCQFlag, int nAutoComplete);
-int GetTickData(THANDLE hTdb, char* szCode, char* szMarket, int nDate);//带买卖盘的tick
-int GetTransaction(THANDLE hTdb, char* szCode, char* szMarket, int nDate); //逐笔成交
-int GetOrder(THANDLE hTdb, char* szCode, char* szMarket, int nDate);//逐笔委托
-int GetOrderQueue(THANDLE hTdb, char* szCode, char* szMarket, int nDate);//委托队列
+int GetTickData(THANDLE hTdb, const char* szCode, const char* szMarket, int nDate);//带买卖盘的tick
+int GetTransaction(THANDLE hTdb, const char* szCode, const char* szMarket, int nDate); //逐笔成交
+int GetOrder(THANDLE hTdb, const char* szCode, const char* szMarket, int nDate);//逐笔委托
+int GetOrderQueue(THANDLE hTdb, const char* szCode, const char* szMarket, int nDate);//委托队列
 void UseEZFFormula(THANDLE hTdb);
 void GetCodeTable(THANDLE hTdb, char* szMarket);
 int GetCodeTableFromConfigFile(const char* szMarket, TDBDefine_Code (&pCodeTable)[MAX_STOCK_NUM], int & pCount);
+
+std::string array2str(const int* arr, int len);
+std::string uarr2str(unsigned int arr[], int n);
+std::string array2strn(const int* arr, int len, int totalnum);
+std::string tmp_int2str(int n);
+std::string arr2str(int arr[], int n);
+std::string int2str(int n);
 
 #endif //_TDBFUNCTION_H_
