@@ -41,6 +41,9 @@ int main()
 {
 	//读取配置文件，配置下载股票列表以及下载日期列表
 	cerr << "Start downloading L2 raw data from Wind!\n" << endl; 
+
+	// 打开log文件
+	MakeLocalLogFile(filelog);
 	
 	//初始化设置账户信息,包括账号密码，wind远程服务器等
 	OPEN_SETTINGS settings = {0};
@@ -78,9 +81,6 @@ int main()
 	int ret;
     ret = LoadStkDateDirConfig(stkList, stkStart, stkEnd, dateList, dateStart, dateEnd, dir_output);	  	
 
-	// 打开log文件
-	MakeLocalLogFile(filelog);
-
 	// 进行循环遍历股票和日期，先完成一天的所有股票
 	int todayDate, startDate, endDate;
 	startDate = atoi(dateStart.c_str());
@@ -109,6 +109,7 @@ int main()
 			else{
 				cerr<<"--->>> Error when creating date folder."<< dir_today <<endl; 
 				filelog<<"--->>> Error when creating date folder."<< dir_today <<endl;	
+				getchar();
 				exit(0);
 			}
 		}
@@ -159,7 +160,7 @@ int main()
 					continue;
 				
 				// shanghai没有order
-				if ("SH-2-0" == thisStkMarket){		
+				if ("SZ-2-0" == thisStkMarket){		
 					nRetOrder = GetOrder(hTdb, thisStk.c_str(), thisStkMarket.c_str(), todayDate);
 					flagRetry = ResponseToTDBReturn(nRetOrderQueue, hTdb, settings);
 					if (flagRetry)		// 如果flagRetry非0，返回while重新下载
@@ -290,49 +291,53 @@ int LoadStkDateDirConfig(vector<string>& stkList, vector<string>::size_type& stk
 int LoadUserConfig(OPEN_SETTINGS& settings)
 {
 	
-	ifstream accuoutfile;  
-	//accuoutfile.open("E:\\wind_L2_config\\acount.txt", ios::in);
-	accuoutfile.open("acount.txt", ios::in);
+	ifstream accountfile;  
+	//accountfile.open("E:\\wind_L2_config\\acount.txt", ios::in);
+	accountfile.open("account.txt", ios::in);
 
-	if (accuoutfile.is_open()){
+	if (accountfile.is_open()){
 		std::string strLine;
 	    //printf("Input IP:");
-	    std::getline(accuoutfile, strLine);
+	    std::getline(accountfile, strLine);
 	    strncpy(settings.szIP, strLine.c_str(), sizeof(settings.szIP)-1);
 	    settings.szIP[ELEMENT_COUNT(settings.szIP)-1] = 0;
 
 	    //printf("Input Port:");
-	    std::getline(accuoutfile, strLine);
+	    std::getline(accountfile, strLine);
 	    strncpy(settings.szPort, strLine.c_str(), sizeof(settings.szPort)-1);
 	    settings.szPort[ELEMENT_COUNT(settings.szPort)-1] = 0;
 
 	    //printf("Input User:");
-	    std::getline(accuoutfile, strLine);
+	    std::getline(accountfile, strLine);
 	    strncpy(settings.szUser, strLine.c_str(), sizeof(settings.szUser)-1);
 	    settings.szUser[ELEMENT_COUNT(settings.szUser)-1] = 0;
 
 	    //printf("Input Password:");
-	    std::getline(accuoutfile, strLine);
+	    std::getline(accountfile, strLine);
 	    strncpy(settings.szPassword, strLine.c_str(), sizeof(settings.szPassword)-1);
 	    settings.szPassword[ELEMENT_COUNT(settings.szPassword)-1] = 0;
 
 	    // settings.nTimeOutVal = 30;   //获取数据时，指定网络超时（秒数，为0则设为2分钟），若超过nTimeOutVal秒后未收到回应数据包，则内部会关闭连接
-	    std::getline(accuoutfile, strLine);
+	    std::getline(accountfile, strLine);
 	    settings.nTimeOutVal = atoi(strLine.c_str());
 
 		// settings.nRetryCount = 4;   //获取数据时，若掉线，指定重连次数（为0则不重连），若重连nRetryCount次之后仍掉线，则返回网络错误
-	    std::getline(accuoutfile, strLine);
+	    std::getline(accountfile, strLine);
 	    settings.nRetryCount = atoi(strLine.c_str());
 
 	    // settings.nRetryGap = 0;     //掉线之后重连的时间间隔（秒数，为0则设为1秒）	
-	    std::getline(accuoutfile, strLine);
+	    std::getline(accountfile, strLine);
 	    settings.nRetryGap = atoi(strLine.c_str()); 
 
-		accuoutfile.close();
+		accountfile.close();
+
+		cerr << "Connecting IP: " << settings.szIP << endl; 
+		cerr << "Connecting Port: " << settings.szPort << endl; 
+
 	}
 	else{
 		// print error open
-		cerr << "Error opening file: " << "acount.txt" << endl; 
+		cerr << "Error opening file: " << "account.txt" << endl; 
 		getchar();
 		exit (1); 
 	}
