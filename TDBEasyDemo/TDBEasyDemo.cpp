@@ -40,7 +40,7 @@ ofstream filelog;
 int main()
 {
 	//读取配置文件，配置下载股票列表以及下载日期列表
-	cerr << "Start downloading L2 raw data from Wind!\n" << endl; 
+	cerr << "Info\t" << OutputLocalTime() << "Start downloading L2 raw data from Wind!\n" << endl; 
 
 	// 打开log文件
 	MakeLocalLogFile(filelog);
@@ -103,12 +103,12 @@ int main()
 		else{
 			//Create the folder
 			if(mkdir(dir_today.c_str())==0){
-				cerr<<"--->>> Date folder created." << dir_today <<endl;
-				filelog<<"--->>> Date folder created." << dir_today <<endl;
+				cerr<< "Info\t" << OutputLocalTime() << "Date folder created." << dir_today <<endl;
+				filelog<< "Info\t" << OutputLocalTime() << "Date folder created." << dir_today <<endl;
 			}
 			else{
-				cerr<<"--->>> Error when creating date folder."<< dir_today <<endl; 
-				filelog<<"--->>> Error when creating date folder."<< dir_today <<endl;	
+				cerr<< "Error\t" << OutputLocalTime() << "Error when creating date folder."<< dir_today <<endl; 
+				filelog<< "Error\t" << OutputLocalTime() << "Error when creating date folder."<< dir_today <<endl;	
 				getchar();
 				exit(0);
 			}
@@ -119,8 +119,8 @@ int main()
 		{
 			string thisStk = stkList[stocki];			
 			// 输出进度
-			cerr << "Downloading " << dateList[dayi] << " " << thisStk << endl; 
-			filelog << "Downloading " << dateList[dayi] << " " << thisStk << endl; 
+			cerr << "Info\t" << OutputLocalTime() << "Downloading " << dateList[dayi] << " " << thisStk << endl; 
+			filelog << "Info\t" << OutputLocalTime() << "Downloading " << dateList[dayi] << " " << thisStk << endl; 
 
 			// 判断市场
 			string thisStkMarket;
@@ -147,36 +147,36 @@ int main()
 				nRetTickData = GetTickData(hTdb, thisStk.c_str(), thisStkMarket.c_str(), todayDate); 
 				flagRetry = ResponseToTDBReturn(nRetTickData, hTdb, settings);
 				if (flagRetry)		// 如果flagRetry非0，返回while重新下载
-					continue;
+					{flagSuccess = false;continue;}
 									
 				nRetTransaction = GetTransaction(hTdb, thisStk.c_str(), thisStkMarket.c_str(), todayDate); 		
 				flagRetry = ResponseToTDBReturn(nRetTransaction, hTdb, settings);
 				if (flagRetry)		// 如果flagRetry非0，返回while重新下载
-					continue;
+					{flagSuccess = false;continue;}
 				
 				nRetOrderQueue = GetOrderQueue(hTdb, thisStk.c_str(), thisStkMarket.c_str(), todayDate);
 				flagRetry = ResponseToTDBReturn(nRetOrderQueue, hTdb, settings);
 				if (flagRetry)		// 如果flagRetry非0，返回while重新下载
-					continue;
+					{flagSuccess = false;continue;}
 				
 				// shanghai没有order
 				if ("SZ-2-0" == thisStkMarket){		
 					nRetOrder = GetOrder(hTdb, thisStk.c_str(), thisStkMarket.c_str(), todayDate);
 					flagRetry = ResponseToTDBReturn(nRetOrderQueue, hTdb, settings);
 					if (flagRetry)		// 如果flagRetry非0，返回while重新下载
-						continue;
+						{flagSuccess = false;continue;}
 				}
 
 				// 全部数据下载完以后，将flag置1，跳出while循环
 				flagSuccess = true;
 			}
-			cerr << "Complete " << dateList[dayi] << " " << thisStk << endl; 
-			filelog << "Complete " << dateList[dayi] << " " << thisStk << endl; 
+			cerr << "Info\t" << OutputLocalTime() << "Complete " << dateList[dayi] << " " << thisStk << endl; 
+			filelog << "Info\t" << OutputLocalTime() << "Complete " << dateList[dayi] << " " << thisStk << endl; 
 		}
 	}
 	
-	cerr << "------------程序自然退出-----------------\n" << endl; 
-	filelog << "------------程序自然退出-----------------\n" << endl; 
+	cerr << "------------程序自然退出-----------------\n" << OutputLocalTime() << endl; 
+	filelog << "------------程序自然退出-----------------\n" << OutputLocalTime() << endl; 
 	cerr << "输入任意键结束程序" << endl; 
 	getchar();
  	if (hTdb)
@@ -249,7 +249,8 @@ int LoadStkDateDirConfig(vector<string>& stkList, vector<string>::size_type& stk
 	}
 	else{
 		// print error open
-		cerr << "Error opening file: " << pathConfigFile << endl; 
+		cerr << "Error\t" << OutputLocalTime() << "Error opening file: " << pathConfigFile << endl; 
+		filelog << "Error\t" << OutputLocalTime() << "Error opening file: " << pathConfigFile << endl; 
 		getchar();
 		exit (1); 
 	}	
@@ -264,7 +265,8 @@ int LoadStkDateDirConfig(vector<string>& stkList, vector<string>::size_type& stk
 	}
 	else{
 		// print error open
-		cerr << "Error opening file: " << pathStkList << endl; 
+		cerr << "Error\t" << OutputLocalTime() << "Error opening file: " << pathStkList << endl; 
+		filelog << "Error\t" << OutputLocalTime() << "Error opening file: " << pathStkList << endl; 
 		getchar();		
 		exit (1); 
 	}	
@@ -279,7 +281,8 @@ int LoadStkDateDirConfig(vector<string>& stkList, vector<string>::size_type& stk
 	}
 	else{
 		// print error open
-		cerr << "Error opening file: " << pathStkList << endl; 
+		cerr << "Error\t" << OutputLocalTime() << "Error opening file: " << pathStkList << endl; 
+		filelog << "Error\t" << OutputLocalTime() << "Error opening file: " << pathStkList << endl; 
 		getchar();		
 		exit (1); 
 	}
@@ -331,13 +334,15 @@ int LoadUserConfig(OPEN_SETTINGS& settings)
 
 		accountfile.close();
 
-		cerr << "Connecting IP: " << settings.szIP << endl; 
-		cerr << "Connecting Port: " << settings.szPort << endl; 
-
+		cerr << "Info\t" << OutputLocalTime() << "Connecting IP: " << settings.szIP << endl; 
+		cerr << "Info\t" << OutputLocalTime() << "Connecting Port: " << settings.szPort << endl; 
+		filelog << "Info\t" << OutputLocalTime() << "Connecting IP: " << settings.szIP << endl; 
+		filelog << "Info\t" << OutputLocalTime() << "Connecting Port: " << settings.szPort << endl; 
 	}
 	else{
 		// print error open
-		cerr << "Error opening file: " << "account.txt" << endl; 
+		cerr << "Error\t" << OutputLocalTime() << "Error opening file: " << "account.txt" << endl; 
+		filelog << "Error\t" << OutputLocalTime() << "Error opening file: " << "account.txt" << endl; 
 		getchar();
 		exit (1); 
 	}
@@ -354,16 +359,17 @@ int LogInWithUserConfig(THANDLE& hTdb, OPEN_SETTINGS& settings)
 	//htdb的值和loginRes里的字段，登录失败返回为空，其他就是有值的，loginRes里的info字段可以得出错误原因	
 	while (!hTdb)
     {
-        cerr << "TDB_Open failed:" << loginAnswer.szInfo << " , retry after 60s...!\n" << endl; 
-		Sleep(1000*60);
+        cerr << "Warning\t" << OutputLocalTime() << "TDB_Open failed:" << loginAnswer.szInfo << " , retry after 30s...!\n" << endl; 
+        filelog << "Warning\t" << OutputLocalTime() << "TDB_Open failed:" << loginAnswer.szInfo << " , retry after 30s...!\n" << endl; 
+		Sleep(1000*30);
 		hTdb = TDB_Open(&settings, &loginAnswer);  
 		// getchar();
         // exit(0);
     }	
-	cerr << "TDB_Open Succeed!" << endl; 	
+	cerr << "Info\t" << OutputLocalTime() << "TDB_Open Succeed!" << endl; 	
+	filelog << "Info\t" << OutputLocalTime() << "TDB_Open Succeed!" << endl; 	
 	return 1;		
 }
-
 
 int MakeLocalLogFile(ofstream& filelog)
 {
@@ -372,9 +378,10 @@ int MakeLocalLogFile(ofstream& filelog)
 	tmptime = time(NULL);
 	char tmpdate[32];
 	string tmpstr; 
-	strftime(tmpdate,sizeof(tmpdate),"%Y%m%d",localtime(&tmptime));
-	tmpstr.assign(tmpdate);
-	tmpstr.append("_log.txt");
+	strftime(tmpdate,sizeof(tmpdate),"%Y%m%d_%H%M%S",localtime(&tmptime));
+	tmpstr = "WindL2Download_";
+	tmpstr.append(tmpdate);
+	tmpstr.append(".log");
 	if(access(tmpstr.c_str(),0)==0){
 		//The file exists, open it.
 		cerr<<"--->>> The date log file exists.Open it."<<endl;
@@ -388,6 +395,7 @@ int MakeLocalLogFile(ofstream& filelog)
 		filelog.open(tmpstr.c_str(),ios::out);
 	}
 
+	filelog << "Log file created at: " << OutputLocalTime() << endl;
 	return 1;
 
 }
@@ -400,15 +408,15 @@ int ResponseToTDBReturn(int& nRet, THANDLE& hTdb, OPEN_SETTINGS& settings)
 		case TDB_NETWORK_ERROR:		 
 		case TDB_NETWORK_TIMEOUT:		 
 		case TDB_LOGIN_FAILED:
-			cerr << "Warning: Network Error! Retry Login..." << endl; 
-			filelog << "Warning: Network Error! Retry Login..." << endl;	
+			cerr << "Warning\t" << OutputLocalTime() << "Warning: Network Error! Retry Login..." << endl; 
+			filelog << "Warning\t" << OutputLocalTime() << "Warning: Network Error! Retry Login..." << endl;	
 			LogInWithUserConfig(hTdb, settings);		// 重新登录
 			return -1;
 			break;
 			
 		case TDB_OUT_OF_MEMORY:
-			cerr << "Warning: Out of memory! Waiting 60s... " << endl; 
-			filelog << "Warning: Out of memory! Waiting 60s... " << endl; 
+			cerr << "Warning\t" << OutputLocalTime() << "Warning: Out of memory! Waiting 60s... " << endl; 
+			filelog << "Warning\t" << OutputLocalTime() << "Warning: Out of memory! Waiting 60s... " << endl; 
 			Sleep(1000*60);
 			return -2;
 			break;

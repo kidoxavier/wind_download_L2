@@ -46,5 +46,6 @@ std::string array2strn(const int* arr, int len, int totalnum);
 std::string tmp_int2str(int n);
 std::string arr2str(int arr[], int n);
 std::string int2str(int n);
+std::string OutputLocalTime(void);
 
 #endif //_TDBFUNCTION_H_

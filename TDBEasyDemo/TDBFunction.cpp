@@ -428,8 +428,8 @@ int GetTickData(THANDLE hTdb, const char* szCode, const char* szMarket, int nDat
 		return 0;
 	}
     else{
-		cerr << "\tNot successfully getting Tick data " << nDate << " " << strCode << ". Errorcode:" << nRet << endl; 
-		filelog << "\tNot successfully getting Tick data " << nDate << " " << strCode << ". Errorcode:" << nRet << endl; 
+		cerr << "Warning\t" << OutputLocalTime() << "Not successfully getting Tick data " << nDate << " " << strCode << ". Errorcode:" << nRet << endl; 
+		filelog << "Warning\t" << OutputLocalTime() << "Not successfully getting Tick data " << nDate << " " << strCode << ". Errorcode:" << nRet << endl; 
 		return nRet;
     }
 
@@ -479,8 +479,8 @@ int GetTransaction(THANDLE hTdb, const char* szCode, const char* szMarketKey, in
 		return 0;
 	}
 	else{
-		cerr << "\tNot successfully getting Transaction data " << nDate << " " << strCode << ". Errorcode:" << nRet << endl; 
-		filelog << "\tNot successfully getting Transaction data " << nDate << " " << strCode << ". Errorcode:" << nRet << endl; 
+		cerr << "Warning\t" << OutputLocalTime() << "Not successfully getting Transaction data " << nDate << " " << strCode << ". Errorcode:" << nRet << endl; 
+		filelog << "Warning\t" << OutputLocalTime() << "Not successfully getting Transaction data " << nDate << " " << strCode << ". Errorcode:" << nRet << endl; 
 		return nRet;
 	}
 
@@ -534,8 +534,8 @@ int GetOrder(THANDLE hTdb, const char* szCode, const char* szMarketKey, int nDat
 		return 0;
 	}
 	else{
-		cerr << "\tNot successfully getting Order data " << nDate << " " << strCode << ". Errorcode:" << nRet << endl; 
-		filelog << "\tNot successfully getting Order data " << nDate << " " << strCode << ". Errorcode:" << nRet << endl; 
+		cerr << "Warning\t" << OutputLocalTime() << "Not successfully getting Order data " << nDate << " " << strCode << ". Errorcode:" << nRet << endl; 
+		filelog << "Warning\t" << OutputLocalTime() << "Not successfully getting Order data " << nDate << " " << strCode << ". Errorcode:" << nRet << endl; 
 		return nRet;
 	}
 
@@ -589,8 +589,8 @@ int GetOrderQueue(THANDLE hTdb, const char* szCode, const char* szMarketKey, int
 		return 0;
 	}
 	else{
-		cerr << "\tNot successfully getting Orderqueue data " << nDate << " " << strCode << ". Errorcode:" << nRet << endl; 
-		filelog << "\tNot successfully getting Orderqueue data " << nDate << " " << strCode << ". Errorcode:" << nRet << endl; 
+		cerr << "Warning\t" << OutputLocalTime() << "Not successfully getting Orderqueue data " << nDate << " " << strCode << ". Errorcode:" << nRet << endl; 
+		filelog << "Warning\t" << OutputLocalTime() << "Not successfully getting Orderqueue data " << nDate << " " << strCode << ". Errorcode:" << nRet << endl; 
 		return nRet;
 	}
 
@@ -682,3 +682,14 @@ void UseEZFFormula(THANDLE hTdb)
 		TDB_ReleaseCalcFormula(pResult);
 }
 */
+
+string OutputLocalTime(void)
+{
+	SYSTEMTIME sys; 
+	GetLocalTime( &sys ); 
+	string localtime;
+	char tmptime[64];
+	sprintf(tmptime, "%02d:%02d:%02d.%03d\t",sys.wHour,sys.wMinute, sys.wSecond,sys.wMilliseconds); 
+	localtime = tmptime;
+	return localtime;
+}
