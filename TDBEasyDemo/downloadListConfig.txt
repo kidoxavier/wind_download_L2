@@ -1,0 +1,9 @@
+E:\DrawDataFromWindL2Server\downloadList.txt
+0
+545798
+D:\WindL2DownloadDirtyData\
+
+%% 1st line: path\file
+%% 2nd line: start stock No.
+%% 3rd line: end stock No.
+%% 4th line: output dir

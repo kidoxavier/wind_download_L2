@@ -18,5 +18,6 @@ int LogInWithUserConfig(THANDLE& hTdb, OPEN_SETTINGS& settings);
 int MakeLocalLogFile(ofstream& filelog);
 int ResponseToTDBReturn(int& nRet, THANDLE& hTdb, OPEN_SETTINGS& settings);
 int ProcessTodayDir(string today_str);
+int LoadDownloadList(vector<string>& list, vector<string>::size_type& listStart, vector<string>::size_type& listEnd, string& dir_output);
 
 #endif //_TDBEASYDEMO_H_

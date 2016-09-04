@@ -55,107 +55,92 @@ int main()
 
 	int nRet = TDB_SUCCESS;
 
-	//获取两个市场的股票代码，从API上实时返回
-	//GetCodeTable(hTdb, "SZ-2-0");
-	//GetCodeTable(hTdb, "SH-2-0");
-	//获取两个市场的股票代码，从文件中读取	
-	/*TDBDefine_Code pCodetableSZ[MAX_STOCK_NUM];
-	TDBDefine_Code pCodetableSH[MAX_STOCK_NUM];	
-	int stkNumSZ=0,stkNumSH=0;
-	int retSH = -1, retSZ = -1;*/
-	//while(retSH < 0){
-	//	retSH = GetCodeTableFromConfigFile("SH-2-0", pCodetableSH, stkNumSH);
-	//	//Sleep(1000); //等待1s
-	//}
-	//while(retSZ < 0){
-	//	retSZ = GetCodeTableFromConfigFile("SZ-2-0", pCodetableSZ, stkNumSZ);
-	//	//Sleep(1000); //等待1s
-	//}
-
 	// 读取股票代码，日期以及配置文件（指定股票、日期下载）
-	vector<string> stkList;
-	vector<string>::size_type stkStart,stkEnd;	
-	vector<string> dateList;
-	string dateStart, dateEnd;
-	//string dir_output;
+	vector<string> downloadList;
+	vector<string>::size_type listStart,listEnd;	
 	int ret;
-    ret = LoadStkDateDirConfig(stkList, stkStart, stkEnd, dateList, dateStart, dateEnd, dir_output);	  	
+    //ret = LoadStkDateDirConfig(stkList, stkStart, stkEnd, dateList, dateStart, dateEnd, dir_output);	  	
+	ret = LoadDownloadList(downloadList, listStart, listEnd, dir_output);
 
-	// 进行循环遍历股票和日期，先完成一天的所有股票
-	int todayDate, startDate, endDate;
-	startDate = atoi(dateStart.c_str());
-	endDate = atoi(dateEnd.c_str());
-	for(vector<string>::size_type dayi = 0; dayi!=dateList.size(); ++dayi)
+	// 进行循环遍历download list
+	for(vector<string>::size_type listi = 0; listi != downloadList.size(); ++listi)
 	{
-		// 只处理配置文件设置的日期
-		todayDate = atoi(dateList[dayi].c_str());
-		if (todayDate < startDate || todayDate > endDate){			
-			continue;
-		}
-	
-		
+        if (listi < listStart || listi > listEnd)         
+            continue;
+ 	
+		// 
+		string thisFile = downloadList[listi];
+		// 20140729_SZ002003_orderqueue.csv
+		string thisDate = thisFile.substr(0,8);
+		int todayDate = atoi(thisDate.c_str());
+		string thisStk = thisFile.substr(11,6) + "." + thisFile.substr(9,2);
+		string::size_type pos_dot = thisFile.find(".");
+		string thisFileType = thisFile.substr(18,pos_dot-18);
 		// 创建当天日期的文件夹，检查文件夹是否存在
-		ProcessTodayDir(dateList[dayi]);
+		ProcessTodayDir(thisDate);
 
-	
-		// 开始遍历所有股票
-		for(vector<string>::size_type stocki = stkStart; stocki < stkEnd; ++stocki)
-		{
-			string thisStk = stkList[stocki];			
-			// 输出进度
-			cerr << "Info\t" << OutputLocalTime() << "Downloading " << dateList[dayi] << " " << thisStk << endl; 
-			filelog << "Info\t" << OutputLocalTime() << "Downloading " << dateList[dayi] << " " << thisStk << endl; 
+		// 开始遍历所有文件
+			
+		// 输出进度
+		cerr << "Info\t" << OutputLocalTime() << "Downloading " << thisDate << " " << thisStk << " " << thisFileType << endl; 
+		filelog << "Info\t" << OutputLocalTime() << "Downloading " << thisDate << " " << thisStk << " " << thisFileType << endl; 
 
-			// 判断市场
-			string thisStkMarket;
-			if (thisStk.substr(7,2) == "SZ")		
-				thisStkMarket = "SZ-2-0";		
-			else
-				thisStkMarket = "SH-2-0";			
-	
-			// 开始下载数据，sh不用下载逐笔委托
-			// K线
-			//GetK(hTdb, "000001.sz", CYC_SECOND,  1, REFILL_NONE, 1, 20120101, 20131231);
-			//GetK(hTdb, "000001.sz", CYC_MINUTE,  1, REFILL_NONE, 1, 20120101, 20131231);
-			//GetK(hTdb, "000001.sz", CYC_DAY,	1, REFILL_NONE, 1, 20120101, 20131231);
-				
-			// 开始下载该股票当天的数据
-			int nRetTickData 	= 0;
-			int nRetTransaction = 0;
-			int nRetOrderQueue 	= 0;
-			int nRetOrder 		= 0;
-			bool flagSuccess 	= false;	// 标志是否成功取到数据
-			int  flagRetry 		= 1;
-			while (!flagSuccess){
-				// 下载数据，如果遇到一些特殊error标志，则重新下载
+		// 判断市场
+		string thisStkMarket;
+		if (thisStk.substr(7,2) == "SZ")		
+			thisStkMarket = "SZ-2-0";		
+		else
+			thisStkMarket = "SH-2-0";			
+		
+		// 开始下载该股票当天的数据
+		int nRetTickData 	= 0;
+		int nRetTransaction = 0;
+		int nRetOrderQueue 	= 0;
+		int nRetOrder 		= 0;
+		bool flagSuccess 	= false;	// 标志是否成功取到数据
+		int  flagRetry 		= 1;
+		while (!flagSuccess){
+
+			// 下载数据，如果遇到一些特殊error标志，则重新下载
+			if (thisFileType == "tickdata"){
 				nRetTickData = GetTickData(hTdb, thisStk.c_str(), thisStkMarket.c_str(), todayDate); 
 				flagRetry = ResponseToTDBReturn(nRetTickData, hTdb, settings);
 				if (flagRetry)		// 如果flagRetry非0，返回while重新下载
 					{flagSuccess = false;continue;}
-									
-				nRetTransaction = GetTransaction(hTdb, thisStk.c_str(), thisStkMarket.c_str(), todayDate); 		
-				flagRetry = ResponseToTDBReturn(nRetTransaction, hTdb, settings);
-				if (flagRetry)		// 如果flagRetry非0，返回while重新下载
-					{flagSuccess = false;continue;}
-				
-				nRetOrderQueue = GetOrderQueue(hTdb, thisStk.c_str(), thisStkMarket.c_str(), todayDate);
-				flagRetry = ResponseToTDBReturn(nRetOrderQueue, hTdb, settings);
-				if (flagRetry)		// 如果flagRetry非0，返回while重新下载
-					{flagSuccess = false;continue;}
-				
+			}
+			else if (thisFileType == "order"){
 				// shanghai没有order
-				if ("SZ-2-0" == thisStkMarket){		
+				if ("SZ-2-0" == thisStkMarket){ 	
 					nRetOrder = GetOrder(hTdb, thisStk.c_str(), thisStkMarket.c_str(), todayDate);
 					flagRetry = ResponseToTDBReturn(nRetOrder, hTdb, settings);
 					if (flagRetry)		// 如果flagRetry非0，返回while重新下载
 						{flagSuccess = false;continue;}
 				}
-
-				// 全部数据下载完以后，将flag置1，跳出while循环
-				flagSuccess = true;
 			}
-			cerr << "Info\t" << OutputLocalTime() << "Complete " << dateList[dayi] << " " << thisStk << endl; 
-			filelog << "Info\t" << OutputLocalTime() << "Complete " << dateList[dayi] << " " << thisStk << endl; 
+			else if (thisFileType == "orderqueue"){					
+				nRetOrderQueue = GetOrderQueue(hTdb, thisStk.c_str(), thisStkMarket.c_str(), todayDate);
+				flagRetry = ResponseToTDBReturn(nRetOrderQueue, hTdb, settings);
+				if (flagRetry)		// 如果flagRetry非0，返回while重新下载
+					{flagSuccess = false;continue;}
+			}
+			else if (thisFileType == "transaction"){					
+				nRetTransaction = GetTransaction(hTdb, thisStk.c_str(), thisStkMarket.c_str(), todayDate);		
+				flagRetry = ResponseToTDBReturn(nRetTransaction, hTdb, settings);
+				if (flagRetry)		// 如果flagRetry非0，返回while重新下载
+					{flagSuccess = false;continue;}
+			}
+			else{			
+				cerr << "Warning\t" << OutputLocalTime() << "Error File Type " << thisDate << " " << thisStk << " " << thisFileType << endl; 
+				filelog << "Warning\t" << OutputLocalTime() << "Error File Type " << thisDate << " " << thisStk << " " << thisFileType << endl; 
+			}
+
+
+			// 全部数据下载完以后，将flag置1，跳出while循环
+			flagSuccess = true;
+			
+			cerr << "Info\t" << OutputLocalTime() << "Complete " << thisDate << " " << thisStk << " " << thisFileType << endl; 
+			filelog << "Info\t" << OutputLocalTime() << "Complete " << thisDate << " " << thisStk << " " << thisFileType << endl; 
+
 		}
 	}
 	
@@ -167,41 +152,6 @@ int main()
 		nRet = TDB_Close(hTdb);
 	filelog.close();
 
-	{
-		//GetKData(hTdb, "600163.sh", "sh-2-0", 20150910, 20150915, CYC_MINUTE, 0, 0, 0);
-		//GetKData(hTdb, "000001.sz", "SZ-2-0", 20150424, 20150424, CYC_MINUTE, 0, 0, 0);
-		//GetKData(hTdb, "000001.sz", "SZ-2-0", 20150424, 20150424, CYC_DAY, 0, 0, 0);
-		//GetKData(hTdb, "000001.sz", "SZ-2-0", 20150424, 20150424, CYC_SECOND, 0, 0, 1);
-		//GetTickData(hTdb, "000001.sz", "SZ-2-0", 20160721);//带买卖盘的tick
-		//GetTickData(hTdb, "601336.sh", "SH-2-0", 20160721);//带买卖盘的tick
-		//GetTransaction(hTdb, "000001.sz", "SZ-2-0", 20160721);
-		//GetTransaction(hTdb, "600508.sh", "SH-2-0", 20160721);
-		//GetOrder(hTdb, "000001.sz", "SZ-2-0", 20160721);//逐笔委托
-		//GetOrder(hTdb, "600508.sh", "SH-2-0", 20160721);//SH没有逐笔委托，返回warning
-		//GetOrderQueue(hTdb, "000001.sz", "SZ-2-0", 20160513);//委托队列
-		//GetOrderQueue(hTdb, "600311.sh", "SH-2-0", 20160513);//委托队列
-
-		//GetTickData(hTdb, "601336.sh", "SH-2-0", 20160721);//带买卖盘的tick
-		//GetTransaction(hTdb, "601336.sh", "SH-2-0", 20160721);
-		//GetOrderQueue(hTdb, "601336.sh", "SH-2-0", 20160721);//委托队列
-		//UseEZFFormula(hTdb);
-	}
-	
-	//for (int stki = 0; stki<stkNumSZ; ++stki){
-	//	printf("%d\t%s\n",stki,pCodetableSZ[stki].chWindCode);
-		//GetTickData(hTdb, pCodetableSZ[stki].chWindCode, pCodetableSZ[stki].chMarket, 20160721);//带买卖盘的tick		
-		//GetTransaction(hTdb, pCodetableSZ[stki].chWindCode, pCodetableSZ[stki].chMarket, 20160721);	
-		//GetOrder(hTdb, pCodetableSZ[stki].chWindCode, pCodetableSZ[stki].chMarket, 20160721);//逐笔委托
-		//GetOrderQueue(hTdb, pCodetableSZ[stki].chWindCode, pCodetableSZ[stki].chMarket, 20160721);//委托队列			
-	//}
-
-	//for (int stki = 0; stki<stkNumSH; ++stki){
-	//	printf("%d\t%s\n",stki,pCodetableSH[stki].chWindCode);
-	//	GetTickData(hTdb, pCodetableSH[stki].chWindCode, pCodetableSH[stki].chMarket, 20160721);//带买卖盘的tick		
-	//	GetTransaction(hTdb, pCodetableSH[stki].chWindCode, pCodetableSH[stki].chMarket, 20160721);	
-	//	//GetOrder(hTdb, pCodetableSH[stki].chWindCode, pCodetableSH[stki].chMarket, 20160721);//逐笔委托
-	//	GetOrderQueue(hTdb, pCodetableSH[stki].chWindCode, pCodetableSH[stki].chMarket, 20160721);//委托队列			
-	//}
 	
 }
 
@@ -460,5 +410,55 @@ int ProcessTodayDir(string today_str)
 	}
 
 	return 1;
+}
+
+
+int LoadDownloadList(vector<string>& list, vector<string>::size_type& listStart, vector<string>::size_type& listEnd, string& dir_output)
+{
+	ifstream downloadfile;  
+	std::string strLine;
+	std::string pathStkList;		
+	
+	// 打开download config文件，读取文件path和股票、日期下载范围
+	//std::string pathConfigFile("E:\\wind_L2_config\\downloadConfig.txt");
+	std::string pathConfigFile("downloadListConfig.txt");	
+	downloadfile.open(pathConfigFile.c_str(), ios::in);	
+	if (downloadfile.is_open()){
+	    std::getline(downloadfile, pathStkList);
+	    std::getline(downloadfile, strLine);
+		listStart = atoi(strLine.c_str());
+	    std::getline(downloadfile, strLine);
+		listEnd = atoi(strLine.c_str());
+
+	    std::getline(downloadfile, dir_output);
+
+		downloadfile.close();
+	}
+	else{
+		// print error open
+		cerr << "Error\t" << OutputLocalTime() << "Error opening file: " << pathConfigFile << endl; 
+		filelog << "Error\t" << OutputLocalTime() << "Error opening file: " << pathConfigFile << endl; 
+		getchar();
+		exit (1); 
+	}	
+
+	// 读取下载列表
+	downloadfile.open(pathStkList.c_str(), ios::in);
+	if (downloadfile.is_open()){
+		while (getline(downloadfile,strLine)){
+			list.push_back(strLine);
+		}
+		downloadfile.close();
+	}
+	else{
+		// print error open
+		cerr << "Error\t" << OutputLocalTime() << "Error opening file: " << pathStkList << endl; 
+		filelog << "Error\t" << OutputLocalTime() << "Error opening file: " << pathStkList << endl; 
+		getchar();		
+		exit (1); 
+	}	
+
+	return 0;
+
 }
 
