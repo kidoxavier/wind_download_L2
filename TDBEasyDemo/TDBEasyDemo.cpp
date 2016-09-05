@@ -1,6 +1,6 @@
 // TDBEasyDemo.cpp : 定义控制台应用程序的入口点。
 //
-# include "TDBEasyDemo.h"
+#include "TDBEasyDemo.h"
 
 #include <stdio.h>
 #include <string.h> 
@@ -41,17 +41,37 @@ int main()
 {
 	//读取配置文件，配置下载股票列表以及下载日期列表
 	cerr << "Info\t" << OutputLocalTime() << "Start downloading L2 raw data from Wind!\n" << endl; 
+	int ret;
 
-	// 打开log文件
-	MakeLocalLogFile(filelog);
+	// 打开log文件	
+	ret = MakeLocalLogFile(filelog);
+	if (ret)
+{
+		getchar();
+		return -1;
+	}	
 	
 	//初始化设置账户信息,包括账号密码，wind远程服务器等
 	OPEN_SETTINGS settings = {0};
-    LoadUserConfig(settings);
+    ret = LoadUserConfig(settings);
+	if (ret)
+{
+		getchar();
+		filelog.close();		
+		return -1;
+	}		
 
 	//调用TDB_Open，登录wind远程服务器, 如果一次不成功，会每隔60s重试一次
     THANDLE hTdb;
-	LogInWithUserConfig(hTdb, settings);
+	ret = LogInWithUserConfig(hTdb, settings);
+	if (ret)
+{
+		getchar();
+	 	if (hTdb)
+			TDB_Close(hTdb);
+		filelog.close();		
+		return -1;
+	}
 
 	int nRet = TDB_SUCCESS;
 
@@ -78,9 +98,16 @@ int main()
 	vector<string> dateList;
 	string dateStart, dateEnd;
 	//string dir_output;
-	int ret;
     ret = LoadStkDateDirConfig(stkList, stkStart, stkEnd, dateList, dateStart, dateEnd, dir_output);	  	
-
+	if (ret)
+{
+		getchar();
+	 	if (hTdb)
+			nRet = TDB_Close(hTdb);
+		filelog.close();			
+		return -1;
+	}
+	
 	// 进行循环遍历股票和日期，先完成一天的所有股票
 	int todayDate, startDate, endDate;
 	startDate = atoi(dateStart.c_str());
@@ -92,10 +119,17 @@ int main()
 		if (todayDate < startDate || todayDate > endDate){			
 			continue;
 		}
-	
-		
+			
 		// 创建当天日期的文件夹，检查文件夹是否存在
-		ProcessTodayDir(dateList[dayi]);
+		ret = ProcessTodayDir(dateList[dayi]);
+		if (ret)
+{
+			getchar();
+		 	if (hTdb)
+				nRet = TDB_Close(hTdb);
+			filelog.close();				
+			return -1;
+		}
 
 	
 		// 开始遍历所有股票
@@ -113,12 +147,7 @@ int main()
 			else
 				thisStkMarket = "SH-2-0";			
 	
-			// 开始下载数据，sh不用下载逐笔委托
-			// K线
-			//GetK(hTdb, "000001.sz", CYC_SECOND,  1, REFILL_NONE, 1, 20120101, 20131231);
-			//GetK(hTdb, "000001.sz", CYC_MINUTE,  1, REFILL_NONE, 1, 20120101, 20131231);
-			//GetK(hTdb, "000001.sz", CYC_DAY,	1, REFILL_NONE, 1, 20120101, 20131231);
-				
+			// 开始下载数据，sh不用下载逐笔委托				
 			// 开始下载该股票当天的数据
 			int nRetTickData 	= 0;
 			int nRetTransaction = 0;
@@ -164,9 +193,10 @@ int main()
 	cerr << "输入任意键结束程序" << endl; 
 	getchar();
  	if (hTdb)
+		// 测试后发现，不论是否TDB_Close关闭成功，都返回0；
 		nRet = TDB_Close(hTdb);
 	filelog.close();
-
+	return 0;
 	{
 		//GetKData(hTdb, "600163.sh", "sh-2-0", 20150910, 20150915, CYC_MINUTE, 0, 0, 0);
 		//GetKData(hTdb, "000001.sz", "SZ-2-0", 20150424, 20150424, CYC_MINUTE, 0, 0, 0);
@@ -186,22 +216,6 @@ int main()
 		//GetOrderQueue(hTdb, "601336.sh", "SH-2-0", 20160721);//委托队列
 		//UseEZFFormula(hTdb);
 	}
-	
-	//for (int stki = 0; stki<stkNumSZ; ++stki){
-	//	printf("%d\t%s\n",stki,pCodetableSZ[stki].chWindCode);
-		//GetTickData(hTdb, pCodetableSZ[stki].chWindCode, pCodetableSZ[stki].chMarket, 20160721);//带买卖盘的tick		
-		//GetTransaction(hTdb, pCodetableSZ[stki].chWindCode, pCodetableSZ[stki].chMarket, 20160721);	
-		//GetOrder(hTdb, pCodetableSZ[stki].chWindCode, pCodetableSZ[stki].chMarket, 20160721);//逐笔委托
-		//GetOrderQueue(hTdb, pCodetableSZ[stki].chWindCode, pCodetableSZ[stki].chMarket, 20160721);//委托队列			
-	//}
-
-	//for (int stki = 0; stki<stkNumSH; ++stki){
-	//	printf("%d\t%s\n",stki,pCodetableSH[stki].chWindCode);
-	//	GetTickData(hTdb, pCodetableSH[stki].chWindCode, pCodetableSH[stki].chMarket, 20160721);//带买卖盘的tick		
-	//	GetTransaction(hTdb, pCodetableSH[stki].chWindCode, pCodetableSH[stki].chMarket, 20160721);	
-	//	//GetOrder(hTdb, pCodetableSH[stki].chWindCode, pCodetableSH[stki].chMarket, 20160721);//逐笔委托
-	//	GetOrderQueue(hTdb, pCodetableSH[stki].chWindCode, pCodetableSH[stki].chMarket, 20160721);//委托队列			
-	//}
 	
 }
 
@@ -235,8 +249,7 @@ int LoadStkDateDirConfig(vector<string>& stkList, vector<string>::size_type& stk
 		// print error open
 		cerr << "Error\t" << OutputLocalTime() << "Error opening file: " << pathConfigFile << endl; 
 		filelog << "Error\t" << OutputLocalTime() << "Error opening file: " << pathConfigFile << endl; 
-		getchar();
-		exit (1); 
+		return -1;
 	}	
 
 	// 读取股票列表
@@ -251,8 +264,8 @@ int LoadStkDateDirConfig(vector<string>& stkList, vector<string>::size_type& stk
 		// print error open
 		cerr << "Error\t" << OutputLocalTime() << "Error opening file: " << pathStkList << endl; 
 		filelog << "Error\t" << OutputLocalTime() << "Error opening file: " << pathStkList << endl; 
-		getchar();		
-		exit (1); 
+		//getchar();		
+		return -1; 
 	}	
 
 	// 读取日期列表
@@ -266,9 +279,8 @@ int LoadStkDateDirConfig(vector<string>& stkList, vector<string>::size_type& stk
 	else{
 		// print error open
 		cerr << "Error\t" << OutputLocalTime() << "Error opening file: " << pathStkList << endl; 
-		filelog << "Error\t" << OutputLocalTime() << "Error opening file: " << pathStkList << endl; 
-		getchar();		
-		exit (1); 
+		filelog << "Error\t" << OutputLocalTime() << "Error opening file: " << pathStkList << endl; 	
+		return -1;
 	}
 
 	return 0;
@@ -328,10 +340,10 @@ int LoadUserConfig(OPEN_SETTINGS& settings)
 		cerr << "Error\t" << OutputLocalTime() << "Error opening file: " << "account.txt" << endl; 
 		filelog << "Error\t" << OutputLocalTime() << "Error opening file: " << "account.txt" << endl; 
 		getchar();
-		exit (1); 
+		return -1; 
 	}
 
-	return 1;
+	return 0;
 		
 }
 
@@ -347,12 +359,10 @@ int LogInWithUserConfig(THANDLE& hTdb, OPEN_SETTINGS& settings)
         filelog << "Warning\t" << OutputLocalTime() << "TDB_Open failed:" << loginAnswer.szInfo << " , retry after 30s...!\n" << endl; 
 		Sleep(1000*30);
 		hTdb = TDB_Open(&settings, &loginAnswer);  
-		// getchar();
-        // exit(0);
     }	
 	cerr << "Info\t" << OutputLocalTime() << "TDB_Open Succeed!" << endl; 	
 	filelog << "Info\t" << OutputLocalTime() << "TDB_Open Succeed!" << endl; 	
-	return 1;		
+	return 0;		
 }
 
 int MakeLocalLogFile(ofstream& filelog)
@@ -380,42 +390,11 @@ int MakeLocalLogFile(ofstream& filelog)
 	}
 
 	filelog << "Log file created at: " << OutputLocalTime() << endl;
-	return 1;
+	return 0;
 
 }
 
 
-int ResponseToTDBReturn(int& nRet, THANDLE& hTdb, OPEN_SETTINGS& settings)
-{
-	switch(nRet)
-	{ 
-		case TDB_NETWORK_ERROR:		 
-		case TDB_NETWORK_TIMEOUT:		 
-		case TDB_LOGIN_FAILED:
-			cerr << "Warning\t" << OutputLocalTime() << "Warning: Network Error! Retry Login..." << endl; 
-			filelog << "Warning\t" << OutputLocalTime() << "Warning: Network Error! Retry Login..." << endl;	
-			LogInWithUserConfig(hTdb, settings);		// 重新登录
-			return -1;
-			break;
-			
-		case TDB_OUT_OF_MEMORY:
-			cerr << "Warning\t" << OutputLocalTime() << "Warning: Out of memory! Waiting 30s... " << endl; 
-			filelog << "Warning\t" << OutputLocalTime() << "Warning: Out of memory! Waiting 30s... " << endl; 
-			Sleep(1000*30);
-			return -2;
-			break;
-
-		case TDB_SUCCESS:	
-		case TDB_NO_DATA:			
-			return 0;
-			break;   			
-
-		default:
-			return 0;
-			break;
-	}
-
-}
 
 
 int ProcessTodayDir(string today_str)
@@ -433,8 +412,8 @@ int ProcessTodayDir(string today_str)
 		else{
 			cerr<< "Error\t" << OutputLocalTime() << "Error when creating date folder."<< dir_output <<endl; 
 			filelog<< "Error\t" << OutputLocalTime() << "Error when creating date folder."<< dir_output <<endl;	
-			getchar();
-			exit(0);
+			//getchar();
+			return -1;
 		}
 	}
 
@@ -454,11 +433,65 @@ int ProcessTodayDir(string today_str)
 		else{
 			cerr<< "Error\t" << OutputLocalTime() << "Error when creating date folder."<< dir_today <<endl; 
 			filelog<< "Error\t" << OutputLocalTime() << "Error when creating date folder."<< dir_today <<endl;	
-			getchar();
-			exit(0);
+			//getchar();
+			return -1;
 		}
 	}
 
-	return 1;
+	return 0;
+}
+
+/* --------------------------------------------------------------------------------- 
+函数功能:对TDB返回值进行处理.
+		TDB_NETWORK_ERROR\TDB_NETWORK_TIMEOUT\TDB_LOGIN_FAILED，30s后重新登录，再重新下载该股票当天所有数据；
+		TDB_OUT_OF_MEMORY，30s后重新下载该股票当天所有数据；
+		TDB_NO_DATA，输出警告，不重新尝试下载；
+--------------------------------------------------------------------------------- */ 
+int ResponseToTDBReturn(int& nRet, THANDLE& hTdb, OPEN_SETTINGS& settings)
+{
+	switch(nRet)
+	{ 
+		case TDB_NETWORK_ERROR:		 
+			cerr << "Warning\t" << OutputLocalTime() << "Warning: Network error! Retry Login..." << endl; 
+			filelog << "Warning\t" << OutputLocalTime() << "Warning: Network error! Retry Login..." << endl;
+			Sleep(1000*30);			
+			LogInWithUserConfig(hTdb, settings);		// 重新登录			
+			return nRet;
+			break;
+		case TDB_NETWORK_TIMEOUT:	
+			cerr << "Warning\t" << OutputLocalTime() << "Warning: Network timeout! Retry Login..." << endl; 
+			filelog << "Warning\t" << OutputLocalTime() << "Warning: Network timeout! Retry Login..." << endl;
+			Sleep(1000*30);		
+			LogInWithUserConfig(hTdb, settings);		// 重新登录
+			return nRet;			
+			break;
+		case TDB_LOGIN_FAILED:
+			cerr << "Warning\t" << OutputLocalTime() << "Warning: Login failed! Retry Login..." << endl; 
+			filelog << "Warning\t" << OutputLocalTime() << "Warning: Login failed! Retry Login..." << endl;	
+			Sleep(1000*30);					
+			LogInWithUserConfig(hTdb, settings);		// 重新登录
+			return nRet;
+			break;			
+		case TDB_OUT_OF_MEMORY:
+			cerr << "Warning\t" << OutputLocalTime() << "Warning: Out of memory! Waiting 30s... " << endl; 
+			filelog << "Warning\t" << OutputLocalTime() << "Warning: Out of memory! Waiting 30s... " << endl; 
+			Sleep(1000*30);
+			return nRet;
+			break;
+		case TDB_NO_DATA:	
+			cerr << "Warning\t" << OutputLocalTime() << "Warning: No data return!" << endl; 
+			filelog << "Warning\t" << OutputLocalTime() << "Warning: No data return!" << endl;			
+			return 0;
+			break; 
+		case TDB_SUCCESS:	
+			return 0;
+			break;   			 			
+		default:
+			cerr << "Warning\t" << OutputLocalTime() << "Warning: Other error code!" << endl; 
+			filelog << "Warning\t" << OutputLocalTime() << "Warning: Other error code!" << endl;				
+			return 0;
+			break;
+	}
+
 }
 

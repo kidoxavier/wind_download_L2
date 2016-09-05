@@ -693,3 +693,5 @@ string OutputLocalTime(void)
 	localtime = tmptime;
 	return localtime;
 }
+
+
