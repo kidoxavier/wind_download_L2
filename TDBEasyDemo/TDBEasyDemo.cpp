@@ -46,7 +46,7 @@ int main()
 	// 打开log文件	
 	ret = MakeLocalLogFile(filelog);
 	if (ret)
-{
+	{
 		getchar();
 		return -1;
 	}	
@@ -55,7 +55,7 @@ int main()
 	OPEN_SETTINGS settings = {0};
     ret = LoadUserConfig(settings);
 	if (ret)
-{
+	{
 		getchar();
 		filelog.close();		
 		return -1;
@@ -65,7 +65,7 @@ int main()
     THANDLE hTdb;
 	ret = LogInWithUserConfig(hTdb, settings);
 	if (ret)
-{
+	{
 		getchar();
 	 	if (hTdb)
 			TDB_Close(hTdb);
@@ -100,7 +100,7 @@ int main()
 	//string dir_output;
     ret = LoadStkDateDirConfig(stkList, stkStart, stkEnd, dateList, dateStart, dateEnd, dir_output);	  	
 	if (ret)
-{
+	{
 		getchar();
 	 	if (hTdb)
 			nRet = TDB_Close(hTdb);
@@ -123,7 +123,7 @@ int main()
 		// 创建当天日期的文件夹，检查文件夹是否存在
 		ret = ProcessTodayDir(dateList[dayi]);
 		if (ret)
-{
+		{
 			getchar();
 		 	if (hTdb)
 				nRet = TDB_Close(hTdb);
@@ -368,12 +368,29 @@ int LogInWithUserConfig(THANDLE& hTdb, OPEN_SETTINGS& settings)
 int MakeLocalLogFile(ofstream& filelog)
 {
 
+	// 确认log输出目录是否存在
+	string logdir = "locallog\\";
+	if(access(logdir.c_str(),0)==0){
+		//Exists, do nothing
+	}
+	else{
+		//Create the folder
+		if(mkdir(logdir.c_str())==0){
+			cerr<< "Info\t" << OutputLocalTime() << "Log folder created." << logdir <<endl;
+		}
+		else{
+			cerr<< "Error\t" << OutputLocalTime() << "Error when creating date folder."<< logdir <<endl; 
+			return -1;
+		}
+	}
+
+
 	time_t tmptime; 
 	tmptime = time(NULL);
 	char tmpdate[32];
 	string tmpstr; 
 	strftime(tmpdate,sizeof(tmpdate),"%Y%m%d_%H%M%S",localtime(&tmptime));
-	tmpstr = "WindL2Download_";
+	tmpstr = logdir + "WindL2Download_";
 	tmpstr.append(tmpdate);
 	tmpstr.append(".log");
 	if(access(tmpstr.c_str(),0)==0){
